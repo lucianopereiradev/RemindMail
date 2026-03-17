@@ -436,10 +436,32 @@ RemindMail – Seus compromissos, sempre lembrados.
 
   const PORT = process.env.PORT || 3001;
 
-  app.listen(PORT, () =>
-    console.log("Servidor rodando na porta", PORT, "✅")
-  );
+ pool.connect()
+  .then(async () => {
+    console.log("BANCO CONECTADO ✅");
 
-  pool.connect()
-    .then(() => console.log("BANCO CONECTADO ✅"))
-    .catch(err => console.log("ERRO BANCO ❌", err));
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        username TEXT NOT NULL
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reminders (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT,
+        description TEXT,
+        remind_at TIMESTAMP,
+        recurring BOOLEAN DEFAULT false,
+        recurring_type TEXT,
+        sent BOOLEAN DEFAULT false
+      );
+    `);
+
+    console.log("TABELAS OK ✅");
+  })
+  .catch(err => console.log("ERRO BANCO ❌", err));
