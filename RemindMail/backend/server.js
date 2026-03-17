@@ -208,7 +208,7 @@ app.delete("/delete-account", authMiddleware, async (req, res) => {
 });
 
 // Catch-all — qualquer rota não reconhecida devolve o frontend
-app.get("*", (req, res) => {
+app.get("/{*path}", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
