@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "build": "npm install && cd frontend && npm install && npm run build && cp -r dist ../dist"
+    "build": "npm install && cd frontend && npm install && npm run build && cp -r dist ../dist",
     "start": "node server.js"
   },
   "dependencies": {
