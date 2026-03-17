@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const cron = require("node-cron");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -32,13 +32,7 @@ const pool = new Pool(
 
 // ─── Email ────────────────────────────────────────────────────────────────────
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ─── Middleware de autenticação ───────────────────────────────────────────────
 
@@ -328,8 +322,8 @@ Abraços,
 RemindMail
       `.trim();
 
-      await transporter.sendMail({
-        from: `RemindMail <${process.env.EMAIL_USER}>`,
+      await resend.emails.send({
+        from: "RemindMail <onboarding@resend.dev>",
         to: reminder.email,
         subject: `🔔 Lembrete: ${reminder.title}`,
         html: htmlContent,
