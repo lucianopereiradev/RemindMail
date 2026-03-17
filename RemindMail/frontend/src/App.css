@@ -1,0 +1,89 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #3b00ff, #a100ff);
+  color: white;
+}
+
+.container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.auth-card {
+  background: white;
+  color: black;
+  padding: 40px;
+  border-radius: 20px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.auth-card input {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #3b00ff;
+  color: white;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #a100ff;
+}
+
+.dashboard {
+  padding: 40px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.create-box {
+  background: white;
+  color: black;
+  padding: 20px;
+  border-radius: 20px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list {
+  margin-top: 30px;
+}
+
+.reminder {
+  background: white;
+  color: black;
+  padding: 15px;
+  border-radius: 15px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sent {
+  color: green;
+  margin-left: 10px;
+}
+
+.pending {
+  color: orange;
+  margin-left: 10px;
+}
