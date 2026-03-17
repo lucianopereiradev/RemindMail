@@ -1,3 +1,4 @@
+import API_URL from "api.js";
 import { useState } from "react";
 import { Card, CardContent } from "./components/ui/card.jsx";
 import { Button } from "./components/ui/button.jsx";
@@ -11,7 +12,7 @@ export default function Register({ goLogin }) {
   const [username, setUsername] = useState("");
 
   async function register() {
-    const res = await fetch("http://localhost:3001/register", {
+    const res = await fetch(`${API_URL}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, username }),

@@ -1,3 +1,4 @@
+import API_URL from "api.js";
 import { useEffect, useState } from "react";
 import { Button } from "./components/ui/button.jsx";
 import { Input } from "./components/ui/input.jsx";
@@ -28,7 +29,7 @@ export default function Dashboard({ onLogout }) {
   async function loadReminders() {
     const token = localStorage.getItem("token");
 
-    const res = await fetch("http://localhost:3001/reminders", {
+    const res = await fetch(`${API_URL}/reminders`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -41,7 +42,7 @@ export default function Dashboard({ onLogout }) {
 
     const token = localStorage.getItem("token");
 
-    await fetch("http://localhost:3001/reminder", {
+    await fetch(`${API_URL}/reminder`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -66,7 +67,7 @@ export default function Dashboard({ onLogout }) {
   async function deleteReminder(id) {
     const token = localStorage.getItem("token");
 
-    await fetch(`http://localhost:3001/reminder/${id}`, {
+    await fetch(`${API_URL}/reminder/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -86,7 +87,7 @@ export default function Dashboard({ onLogout }) {
   async function saveEdit(id) {
     const token = localStorage.getItem("token");
 
-    await fetch(`http://localhost:3001/reminder/${id}`, {
+    await fetch(`${API_URL}/reminder/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -108,7 +109,7 @@ export default function Dashboard({ onLogout }) {
   async function deleteAccount() {
     const token = localStorage.getItem("token");
 
-    await fetch("http://localhost:3001/delete-account", {
+    await fetch(`${API_URL}/delete-account`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });

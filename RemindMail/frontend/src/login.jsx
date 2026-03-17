@@ -1,3 +1,4 @@
+import API_URL from "api.js";
 import { useState } from "react";
 import { Card, CardContent } from "./components/ui/card.jsx";
 import { Button } from "./components/ui/button.jsx";
@@ -10,7 +11,7 @@ export default function Login({ onLogin, goRegister }) {
   const [password, setPassword] = useState("");
 
   async function login() {
-    const res = await fetch("http://localhost:3001/login", {
+    const res = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
