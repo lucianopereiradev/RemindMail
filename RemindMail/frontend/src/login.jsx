@@ -1,4 +1,4 @@
-import API_URL from "api.js";
+import API_URL from "./api.js";
 import { useState } from "react";
 import { Card, CardContent } from "./components/ui/card.jsx";
 import { Button } from "./components/ui/button.jsx";
