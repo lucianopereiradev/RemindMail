@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const { Resend } = require("resend");
+const fetch = require("node-fetch");
 const cron = require("node-cron");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -30,9 +30,33 @@ const pool = new Pool(
       }
 );
 
-// ─── Email ────────────────────────────────────────────────────────────────────
+// ─── Email (Brevo) ────────────────────────────────────────────────────────────
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+
+async function sendEmail({ to, subject, htmlContent, textContent }) {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "api-key": BREVO_API_KEY,
+    },
+    body: JSON.stringify({
+      sender: { name: "RemindMail", email: "lucianop.jogador@gmail.com" },
+      to: [{ email: to }],
+      subject,
+      htmlContent,
+      textContent,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Brevo error: ${err}`);
+  }
+
+  return res.json();
+}
 
 // ─── Middleware de autenticação ───────────────────────────────────────────────
 
@@ -79,7 +103,6 @@ app.post("/register", async (req, res) => {
   } catch (err) {
     console.log("ERRO /register:", err.message);
 
-    // Email duplicado
     if (err.code === "23505")
       return res.status(400).json({ error: "Email já cadastrado" });
 
@@ -238,7 +261,6 @@ cron.schedule("* * * * *", async () => {
         minute: "2-digit",
       });
 
-      // Calcula próxima data se recorrente
       let nextDate = null;
       if (reminder.recurring) {
         nextDate = new Date(reminder.remind_at);
@@ -322,15 +344,13 @@ Abraços,
 RemindMail
       `.trim();
 
-      await resend.emails.send({
-        from: "RemindMail <onboarding@resend.dev>",
+      await sendEmail({
         to: reminder.email,
         subject: `🔔 Lembrete: ${reminder.title}`,
-        html: htmlContent,
-        text: textContent,
+        htmlContent,
+        textContent,
       });
 
-      // Atualiza banco conforme recorrência
       if (reminder.recurring) {
         await pool.query(
           "UPDATE reminders SET remind_at = $1, sent = false WHERE id = $2",
