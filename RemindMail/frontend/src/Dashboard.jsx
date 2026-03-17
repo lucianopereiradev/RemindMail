@@ -1,4 +1,4 @@
-import API_URL from "api.js";
+import API_URL from "./api.js";
 import { useEffect, useState } from "react";
 import { Button } from "./components/ui/button.jsx";
 import { Input } from "./components/ui/input.jsx";
