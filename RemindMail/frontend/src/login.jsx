@@ -18,15 +18,14 @@ export default function Login({ onLogin, goRegister }) {
     });
 
     const data = await res.json();
-
     if (data.token) onLogin(data.token);
     else alert("Credenciais inválidas");
   }
 
   return (
-    <div className="flex justify-between items-center max-w-6xl mx-auto mt-20">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-white max-w-lg space-y-4">
-        <h1 className="text-3xl font-bold leading-snug">
+    <div className="flex flex-col lg:flex-row justify-center lg:justify-between items-center max-w-6xl mx-auto mt-10 px-6 gap-10">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-white max-w-lg space-y-4 text-center lg:text-left">
+        <h1 className="text-2xl sm:text-3xl font-bold leading-snug">
           Transformando compromissos em notificações automáticas
         </h1>
         <p className="text-white/80">
@@ -34,8 +33,8 @@ export default function Login({ onLogin, goRegister }) {
         </p>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="w-[360px] bg-white shadow-2xl rounded-3xl">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm">
+        <Card className="bg-white shadow-2xl rounded-3xl">
           <CardContent className="p-8 space-y-4">
             <div className="flex items-center gap-2 justify-center">
               <Bell size={20} />

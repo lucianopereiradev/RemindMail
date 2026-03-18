@@ -19,7 +19,6 @@ export default function Register({ goLogin }) {
     });
 
     const data = await res.json();
-
     if (data.success) {
       alert("Conta criada!");
       goLogin();
@@ -29,10 +28,10 @@ export default function Register({ goLogin }) {
   }
 
   return (
-    <div className="flex justify-center mt-24">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="w-[520px] bg-white shadow-2xl rounded-3xl">
-          <CardContent className="p-10 space-y-4">
+    <div className="flex justify-center mt-10 px-4">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+        <Card className="bg-white shadow-2xl rounded-3xl">
+          <CardContent className="p-8 sm:p-10 space-y-4">
             <div className="flex items-center gap-2 justify-center">
               <Bell size={20} />
               <h2 className="font-semibold">Crie uma conta</h2>
@@ -42,15 +41,11 @@ export default function Register({ goLogin }) {
             <Input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
             <Input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} />
 
-            <Button onClick={register} className="w-full rounded-full">
-              Criar
-            </Button>
+            <Button onClick={register} className="w-full rounded-full">Criar</Button>
 
             <p className="text-xs text-center">
               Já possui uma conta?{" "}
-              <span onClick={goLogin} className="font-semibold cursor-pointer">
-                Login
-              </span>
+              <span onClick={goLogin} className="font-semibold cursor-pointer">Login</span>
             </p>
           </CardContent>
         </Card>
