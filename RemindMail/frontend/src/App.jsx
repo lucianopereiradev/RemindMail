@@ -27,26 +27,19 @@ export default function App() {
     setScreen("login");
   }
 
-  function goRegister() {
-    setScreen("register");
-  }
-  function goLogin() {
-    setScreen("login");
-  }
-  function goSobre() {
-    setScreen("sobre");
-  }
   function goBack() {
-    if (authenticated) setScreen("dashboard");
-    else setScreen("login");
+    setScreen(authenticated ? "dashboard" : "login");
   }
 
   let content;
   if (screen === "sobre") content = <Sobre goBack={goBack} />;
   else if (authenticated) content = <Dashboard onLogout={handleLogout} />;
-  else if (screen === "login")
-    content = <Login onLogin={handleLogin} goRegister={goRegister} />;
-  else content = <Register goLogin={goLogin} />;
+  else if (screen === "login") content = <Login onLogin={handleLogin} goRegister={() => setScreen("register")} />;
+  else content = <Register goLogin={() => setScreen("login")} />;
 
-  return <Layout onNavigate={setScreen}>{content}</Layout>;
+  return (
+    <Layout onNavigate={setScreen} authenticated={authenticated}>
+      {content}
+    </Layout>
+  );
 }
