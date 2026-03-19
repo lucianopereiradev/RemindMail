@@ -34,8 +34,14 @@ export default function Dashboard({ onLogout }) {
   const [editRecurringType, setEditRecurringType] = useState("daily");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState("reminders");
+  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
 
-  useEffect(() => { loadReminders(); }, []);
+  useEffect(() => {
+    setUserEmail(localStorage.getItem("userEmail") || "");
+    setUserName(localStorage.getItem("userName") || "");
+    loadReminders();
+  }, []);
 
   function parseServerTimestampAsLocal(value) {
     if (!value) return null;
@@ -283,8 +289,12 @@ export default function Dashboard({ onLogout }) {
             <p className="text-white/70 mb-4">Gerencie sua conta, saia da sessão ou exclua completamente todos os dados.</p>
             <div className="space-y-3 text-sm text-white/90">
               <div className="bg-white/10 rounded-xl p-3 border border-white/10">
-                <p className="text-xs uppercase tracking-wide text-white/50 mb-1">Autenticação</p>
-                <p>Token salvo no armazenamento local.</p>
+                <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/50 mb-2">
+                  <span>Dados da conta</span>
+                  <span className="text-green-300 font-semibold">Ativa</span>
+                </div>
+                <p className="text-white/80"><span className="font-semibold">Usuário:</span> {userName || "-"}</p>
+                <p className="text-white/80"><span className="font-semibold">E-mail:</span> {userEmail || "-"}</p>
               </div>
               <div className="bg-white/10 rounded-xl p-3 border border-white/10">
                 <p className="text-xs uppercase tracking-wide text-white/50 mb-1">Ações</p>
