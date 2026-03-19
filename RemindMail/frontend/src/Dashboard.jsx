@@ -37,19 +37,28 @@ export default function Dashboard({ onLogout }) {
 
   useEffect(() => { loadReminders(); }, []);
 
-  function toLocalDateTime(value) {
-    if (!value) return "";
-    const d = new Date(value);
-    if (isNaN(d.getTime())) {
-      return value.slice(0, 16);
+  function parseServerTimestampAsLocal(value) {
+    if (!value) return null;
+    const normalized = value.replace(" ", "T").replace(".000Z", "");
+    const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (!match) {
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? null : d;
     }
-    const localDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-    return localDate.toISOString().slice(0, 16);
+    const [, year, month, day, hour, minute, second = "00"] = match;
+    return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
+  }
+
+  function toLocalDateTime(value) {
+    const d = parseServerTimestampAsLocal(value);
+    if (!d) return "";
+    const pad = (v) => String(v).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   function formatDateTime(value) {
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return value;
+    const d = parseServerTimestampAsLocal(value);
+    if (!d) return value;
     return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
   }
 
