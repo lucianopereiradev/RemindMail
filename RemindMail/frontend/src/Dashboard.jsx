@@ -218,7 +218,7 @@ export default function Dashboard({ onLogout }) {
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
                           <span className="text-xs text-white/50 flex items-center gap-1">
                             <Clock size={11} />
-                            {new Date(r.remind_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            {new Date(r.remind_at + (r.remind_at.endsWith("Z") ? "" : "Z")).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}
                           </span>
                           {r.recurring && (
                             <span className="text-xs bg-blue-500/20 text-blue-300 border border-blue-400/20 px-2 py-0.5 rounded-full flex items-center gap-1">
