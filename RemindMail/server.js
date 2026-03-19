@@ -223,7 +223,7 @@ cron.schedule("* * * * *", async () => {
         🔁 Próximo aviso: ${nextText} &mdash; ${RECURRING_LABELS[reminder.recurring_type] || reminder.recurring_type}
       </div>` : ""}
 
-      <a href="${APP_URL}" class="cta">Gerenciar meus lembretes →</a>
+      <a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#ffffff !important;text-decoration:none;padding:14px 32px;border-radius:30px;font-weight:600;font-size:15px;margin:8px 0 24px;">Gerenciar meus lembretes →</a>
 
       <div class="sign">
         Abraços,<br>
