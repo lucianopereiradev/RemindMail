@@ -284,28 +284,40 @@ export default function Dashboard({ onLogout }) {
             </motion.div>
           </div>
         ) : (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl text-white">
-            <h3 className="font-bold text-xl mb-2">Conta</h3>
-            <p className="text-white/70 mb-4">Gerencie sua conta, saia da sessão ou exclua completamente todos os dados.</p>
-            <div className="space-y-3 text-sm text-white/90">
-              <div className="bg-white/10 rounded-xl p-3 border border-white/10">
-                <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/50 mb-2">
-                  <span>Dados da conta</span>
-                  <span className="text-green-300 font-semibold">Ativa</span>
-                </div>
-                <p className="text-white/80"><span className="font-semibold">Usuário:</span> {userName || "-"}</p>
-                <p className="text-white/80"><span className="font-semibold">E-mail:</span> {userEmail || "-"}</p>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-br from-violet-900/40 via-blue-900/40 to-slate-900/40 border border-white/15 rounded-3xl p-5 sm:p-7 shadow-2xl text-white">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-bold text-xl sm:text-2xl">Conta</h3>
+                <p className="text-white/70 text-sm sm:text-base">Controle rápido da sessão e segurança da conta.</p>
               </div>
-              <div className="bg-white/10 rounded-xl p-3 border border-white/10">
-                <p className="text-xs uppercase tracking-wide text-white/50 mb-1">Ações</p>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={onLogout} className="flex-1 bg-white/10 hover:bg-white/20 rounded-full gap-2 justify-center">
-                    <LogOut size={14} /> Sair
-                  </Button>
-                  <Button onClick={() => setShowDeleteConfirm(true)} className="flex-1 bg-red-500/20 hover:bg-red-500/40 rounded-full gap-2 justify-center">
-                    <Trash2 size={14} /> Excluir conta
-                  </Button>
+              <div className="rounded-full bg-white/10 border border-white/20 p-2">
+                <LogOut size={20} className="text-indigo-200" />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div className="rounded-2xl border border-blue-300/20 bg-blue-500/10 p-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-full bg-blue-500/20 p-2"><LogOut size={16} className="text-blue-200" /></div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-blue-200">Sessão</p>
+                    <p className="text-sm font-semibold">Ativa agora</p>
+                  </div>
                 </div>
+                <Button onClick={onLogout} className="mt-3 w-full rounded-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white font-semibold py-2 text-xs sm:text-sm">
+                  Sair agora
+                </Button>
+              </div>
+              <div className="rounded-2xl border border-red-300/20 bg-red-500/10 p-3">
+                <div className="flex items-center gap-2">
+                  <div className="rounded-full bg-red-500/20 p-2"><Trash2 size={16} className="text-red-200" /></div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-red-200">Risco</p>
+                    <p className="text-sm font-semibold">Exclusão permanente</p>
+                  </div>
+                </div>
+                <Button onClick={() => setShowDeleteConfirm(true)} className="mt-3 w-full rounded-full bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400 text-white font-semibold py-2 text-xs sm:text-sm">
+                  Excluir minha conta
+                </Button>
               </div>
             </div>
           </motion.div>
