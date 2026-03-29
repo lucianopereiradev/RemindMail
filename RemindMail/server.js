@@ -49,19 +49,137 @@ function authMiddleware(req, res, next) {
   }
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function generateCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 const path = require("path");
 app.use(express.static(path.join(__dirname, "dist")));
 
-app.post("/register", async (req, res) => {
+// Envia código de verificação por e-mail antes do cadastro
+app.post("/send-verification", async (req, res) => {
   try {
-    const { email, password, username } = req.body;
-    if (!email || !password || !username)
-      return res.status(400).json({ error: "Todos os campos são obrigatórios" });
-    const hashed = await bcrypt.hash(password, 10);
-    await pool.query("INSERT INTO users (email, password, username) VALUES ($1, $2, $3)", [email, hashed, username]);
+    const { email } = req.body;
+
+    if (!email || !isValidEmail(email))
+      return res.status(400).json({ error: "E-mail inválido." });
+
+    // Verifica se e-mail já está cadastrado
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    if (existing.rows.length)
+      return res.status(400).json({ error: "E-mail já cadastrado." });
+
+    const code = generateCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
+
+    // Salva (ou substitui) o código na tabela
+    await pool.query(
+      `INSERT INTO verification_codes (email, code, expires_at)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (email) DO UPDATE SET code = $2, expires_at = $3`,
+      [email, code, expiresAt]
+    );
+
+    const htmlContent = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; }
+    .wrapper { max-width: 520px; margin: 30px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+    .header { background: linear-gradient(135deg, #4f46e5, #7c3aed); padding: 28px; text-align: center; }
+    .header h1 { color: white; font-size: 22px; font-weight: 700; }
+    .header p { color: rgba(255,255,255,0.75); font-size: 13px; margin-top: 4px; }
+    .body { padding: 32px; text-align: center; }
+    .body p { color: #555; font-size: 15px; margin-bottom: 24px; }
+    .code-box { display: inline-block; background: #f8f7ff; border: 2px solid #4f46e5; border-radius: 12px; padding: 16px 40px; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #4f46e5; margin-bottom: 20px; }
+    .expiry { color: #9ca3af; font-size: 13px; }
+    .footer { background: #f8f9fa; padding: 16px; text-align: center; font-size: 12px; color: #9ca3af; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>🔔 RemindMail</h1>
+      <p>Verificação de e-mail</p>
+    </div>
+    <div class="body">
+      <p>Use o código abaixo para confirmar seu e-mail e criar sua conta:</p>
+      <div class="code-box">${code}</div>
+      <p class="expiry">⏱ Este código expira em <strong>10 minutos</strong>.</p>
+    </div>
+    <div class="footer">
+      Se você não solicitou este código, ignore este e-mail.<br>
+      © ${new Date().getFullYear()} RemindMail. Todos os direitos reservados.
+    </div>
+  </div>
+</body>
+</html>`;
+
+    await sendEmail({
+      to: email,
+      subject: "🔐 Seu código de verificação - RemindMail",
+      htmlContent,
+      textContent: `Seu código de verificação RemindMail é: ${code}\n\nEle expira em 10 minutos.\n\nSe não solicitou este código, ignore este e-mail.`,
+    });
+
     res.json({ success: true });
   } catch (err) {
-    if (err.code === "23505") return res.status(400).json({ error: "E-mail já cadastrado" });
+    console.log("ERRO /send-verification:", err.message);
+    res.status(500).json({ error: "Erro ao enviar código. Tente novamente." });
+  }
+});
+
+// Cria a conta após verificar o código
+app.post("/register", async (req, res) => {
+  try {
+    const { email, password, username, code } = req.body;
+
+    if (!email || !password || !username || !code)
+      return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+
+    if (!isValidEmail(email))
+      return res.status(400).json({ error: "E-mail inválido." });
+
+    if (password.length < 8)
+      return res.status(400).json({ error: "A senha deve ter no mínimo 8 caracteres." });
+
+    // Verifica o código
+    const result = await pool.query(
+      "SELECT * FROM verification_codes WHERE email = $1",
+      [email]
+    );
+
+    if (!result.rows.length)
+      return res.status(400).json({ error: "Código não encontrado. Solicite um novo." });
+
+    const record = result.rows[0];
+
+    if (new Date() > new Date(record.expires_at))
+      return res.status(400).json({ error: "Código expirado. Solicite um novo." });
+
+    if (record.code !== code)
+      return res.status(400).json({ error: "Código incorreto." });
+
+    // Cria o usuário
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.query(
+      "INSERT INTO users (email, password, username) VALUES ($1, $2, $3)",
+      [email, hashed, username]
+    );
+
+    // Remove o código usado
+    await pool.query("DELETE FROM verification_codes WHERE email = $1", [email]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.log("ERRO /register:", err.message);
+    if (err.code === "23505") return res.status(400).json({ error: "E-mail já cadastrado." });
     res.status(500).json({ success: false });
   }
 });
@@ -70,27 +188,27 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-    if (!result.rows.length) return res.status(400).json({ error: "Usuário não encontrado" });
+    if (!result.rows.length) return res.status(400).json({ error: "Usuário não encontrado." });
     const valid = await bcrypt.compare(password, result.rows[0].password);
-    if (!valid) return res.status(400).json({ error: "Senha incorreta" });
+    if (!valid) return res.status(400).json({ error: "Senha incorreta." });
     const token = jwt.sign({ id: result.rows[0].id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.json({ token });
   } catch (err) {
-    res.status(500).json({ error: "Erro interno" });
+    res.status(500).json({ error: "Erro interno." });
   }
 });
 
 app.post("/reminder", authMiddleware, async (req, res) => {
   try {
     const { title, description, remind_at, recurring, recurring_type } = req.body;
-    if (!title || !remind_at) return res.status(400).json({ error: "Título e data são obrigatórios" });
+    if (!title || !remind_at) return res.status(400).json({ error: "Título e data são obrigatórios." });
     await pool.query(
       `INSERT INTO reminders (user_id, title, description, remind_at, recurring, recurring_type) VALUES ($1, $2, $3, $4, $5, $6)`,
       [req.user.id, title, description, remind_at, recurring ?? false, recurring_type ?? null]
     );
-    res.json({ message: "Lembrete criado" });
+    res.json({ message: "Lembrete criado." });
   } catch (err) {
-    res.status(500).json({ error: "Erro ao criar lembrete" });
+    res.status(500).json({ error: "Erro ao criar lembrete." });
   }
 });
 
@@ -99,7 +217,7 @@ app.get("/reminders", authMiddleware, async (req, res) => {
     const result = await pool.query("SELECT * FROM reminders WHERE user_id = $1 ORDER BY remind_at ASC", [req.user.id]);
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar lembretes" });
+    res.status(500).json({ error: "Erro ao buscar lembretes." });
   }
 });
 
@@ -119,9 +237,9 @@ app.put("/reminder/:id", authMiddleware, async (req, res) => {
 app.delete("/reminder/:id", authMiddleware, async (req, res) => {
   try {
     await pool.query("DELETE FROM reminders WHERE id=$1 AND user_id=$2", [req.params.id, req.user.id]);
-    res.json({ message: "Lembrete removido" });
+    res.json({ message: "Lembrete removido." });
   } catch (err) {
-    res.status(500).json({ error: "Erro ao remover lembrete" });
+    res.status(500).json({ error: "Erro ao remover lembrete." });
   }
 });
 
@@ -194,7 +312,6 @@ cron.schedule("* * * * *", async () => {
     .meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6b7280; }
     .meta-item strong { color: #374151; }
     .recurring-badge { display: inline-flex; align-items: center; gap: 6px; background: #ede9fe; color: #5b21b6; border-radius: 20px; padding: 8px 16px; font-size: 13px; font-weight: 600; margin-bottom: 20px; }
-    .cta { display: block; text-align: center; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; text-decoration: none; padding: 14px 32px; border-radius: 30px; font-weight: 600; font-size: 15px; margin: 8px 0 24px; }
     .sign { font-size: 14px; color: #9ca3af; border-top: 1px solid #f0f0f0; padding-top: 20px; }
     .footer { background: #f8f9fa; padding: 16px 32px; text-align: center; font-size: 12px; color: #9ca3af; }
   </style>
@@ -208,7 +325,6 @@ cron.schedule("* * * * *", async () => {
     <div class="body">
       <p class="greeting">Olá, ${reminder.username}! 👋</p>
       <p class="subtitle">Você tem um compromisso agendado para agora.</p>
-
       <div class="card">
         <div class="card-title">${reminder.title}</div>
         ${reminder.description ? `<div class="card-desc">${reminder.description}</div>` : ""}
@@ -217,14 +333,8 @@ cron.schedule("* * * * *", async () => {
           <div class="meta-item">📅 <strong>${formattedDate}</strong></div>
         </div>
       </div>
-
-      ${reminder.recurring && nextText ? `
-      <div class="recurring-badge">
-      Próximo aviso: ${nextText} &mdash; ${RECURRING_LABELS[reminder.recurring_type] || reminder.recurring_type}
-      </div>` : ""}
-
+      ${reminder.recurring && nextText ? `<div class="recurring-badge">🔁 Próximo aviso: ${nextText} &mdash; ${RECURRING_LABELS[reminder.recurring_type] || reminder.recurring_type}</div>` : ""}
       <a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#ffffff !important;text-decoration:none;padding:14px 32px;border-radius:30px;font-weight:600;font-size:15px;margin:8px 0 24px;">Gerenciar meus lembretes →</a>
-
       <div class="sign">
         Abraços,<br>
         <strong>Equipe RemindMail</strong><br>
@@ -239,18 +349,7 @@ cron.schedule("* * * * *", async () => {
 </body>
 </html>`;
 
-      const textContent = `Olá, ${reminder.username}!
-
-Você tem um compromisso agendado:
-
-📌 ${reminder.title}
-${reminder.description ? `📝 ${reminder.description}\n` : ""}🕐 ${formattedTime} — 📅 ${formattedDate}
-${reminder.recurring && nextText ? `🔁 Próximo aviso: ${nextText} (${RECURRING_LABELS[reminder.recurring_type]})` : ""}
-
-Acesse seus lembretes: ${APP_URL}
-
-Abraços,
-Equipe RemindMail`.trim();
+      const textContent = `Olá, ${reminder.username}!\n\nVocê tem um compromisso agendado:\n\n📌 ${reminder.title}\n${reminder.description ? `📝 ${reminder.description}\n` : ""}🕐 ${formattedTime} — 📅 ${formattedDate}\n${reminder.recurring && nextText ? `🔁 Próximo aviso: ${nextText} (${RECURRING_LABELS[reminder.recurring_type]})` : ""}\n\nAcesse seus lembretes: ${APP_URL}\n\nAbraços,\nEquipe RemindMail`.trim();
 
       await sendEmail({
         to: reminder.email,
@@ -279,8 +378,32 @@ app.listen(PORT, "0.0.0.0", () => console.log("Servidor na porta", PORT, "✅"))
 pool.connect()
   .then(async () => {
     console.log("BANCO CONECTADO ✅");
-    await pool.query(`CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password TEXT NOT NULL, username TEXT NOT NULL);`);
-    await pool.query(`CREATE TABLE IF NOT EXISTS reminders (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE CASCADE, title TEXT NOT NULL, description TEXT, remind_at TIMESTAMP NOT NULL, recurring BOOLEAN DEFAULT false, recurring_type TEXT, sent BOOLEAN DEFAULT false);`);
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      username TEXT NOT NULL
+    );`);
+
+    await pool.query(`CREATE TABLE IF NOT EXISTS reminders (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      description TEXT,
+      remind_at TIMESTAMP NOT NULL,
+      recurring BOOLEAN DEFAULT false,
+      recurring_type TEXT,
+      sent BOOLEAN DEFAULT false
+    );`);
+
+    // Tabela de códigos de verificação
+    await pool.query(`CREATE TABLE IF NOT EXISTS verification_codes (
+      email TEXT PRIMARY KEY,
+      code TEXT NOT NULL,
+      expires_at TIMESTAMP NOT NULL
+    );`);
+
     console.log("TABELAS OK ✅");
   })
   .catch(err => console.log("ERRO BANCO ❌", err));

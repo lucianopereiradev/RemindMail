@@ -36,6 +36,7 @@ export default function Dashboard({ onLogout }) {
   const [activeTab, setActiveTab] = useState("reminders");
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     setUserEmail(localStorage.getItem("userEmail") || "");
@@ -76,7 +77,8 @@ export default function Dashboard({ onLogout }) {
   }
 
   async function createReminder() {
-    if (!title || !date) return alert("Preencha o título e a data/hora do lembrete.");
+    if (!title || !date) return setFormError("Preencha o título e a data/hora do lembrete.");
+    setFormError("");
     const token = localStorage.getItem("token");
     await fetch(`${API_URL}/reminder`, {
       method: "POST",
@@ -151,6 +153,7 @@ export default function Dashboard({ onLogout }) {
               <p className="text-white/50 text-xs mb-4">Ex: "Futebol 18:00" — avise às 17:00</p>
 
               <div className="space-y-3">
+                {formError && <p className="text-sm text-red-400">{formError}</p>}
                 <div className="space-y-1">
                   <label className="text-xs text-white/60 flex items-center gap-1">
                     Título <Tooltip text="Nome do seu compromisso. Ex: Reunião com cliente, Futebol, Dentista." />

@@ -9,8 +9,20 @@ import { motion } from "framer-motion";
 export default function Login({ onLogin, goRegister }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({});
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
 
   async function login() {
+    const errs = {};
+    if (!email.trim()) errs.email = "E-mail é obrigatório.";
+    else if (!isValidEmail(email)) errs.email = "Digite um e-mail válido.";
+    if (!password) errs.password = "Senha é obrigatória.";
+    if (Object.keys(errs).length) return setErrors(errs);
+
+    setErrors({});
     const res = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -18,7 +30,7 @@ export default function Login({ onLogin, goRegister }) {
     });
     const data = await res.json();
     if (data.token) onLogin(data.token);
-    else alert("E-mail ou senha incorretos.");
+    else setErrors({ general: "E-mail ou senha incorretos." });
   }
 
   const features = [
@@ -54,8 +66,35 @@ export default function Login({ onLogin, goRegister }) {
                 <Bell size={20} className="text-blue-600" />
                 <h2 className="font-bold text-gray-800">Entrar na sua conta</h2>
               </div>
-              <Input placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} />
-              <Input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} />
+              <div className="space-y-1">
+                <Input
+                  type="email"
+                  placeholder="E-mail"
+                  value={email}
+                  onChange={e => {
+                    setEmail(e.target.value);
+                    setErrors(p => ({ ...p, email: "", general: "" }));
+                  }}
+                  className={errors.email ? "border-red-400" : ""}
+                />
+                {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+              </div>
+
+              <div className="space-y-1">
+                <Input
+                  type="password"
+                  placeholder="Senha"
+                  value={password}
+                  onChange={e => {
+                    setPassword(e.target.value);
+                    setErrors(p => ({ ...p, password: "", general: "" }));
+                  }}
+                  className={errors.password ? "border-red-400" : ""}
+                />
+                {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+              </div>
+
+              {errors.general && <p className="text-sm text-red-500 text-center">{errors.general}</p>}
               <Button onClick={login} className="w-full rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 font-semibold">
                 Entrar
               </Button>
