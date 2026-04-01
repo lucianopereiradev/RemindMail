@@ -76,6 +76,11 @@ export default function Dashboard({ onLogout }) {
     setReminders(Array.isArray(data) ? data : []);
   }
 
+   
+
+
+ 
+
   async function createReminder() {
     if (!title || !date) return setFormError("Preencha o título e a data/hora do lembrete.");
     setFormError("");
@@ -83,7 +88,7 @@ export default function Dashboard({ onLogout }) {
     await fetch(`${API_URL}/reminder`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ title, description, remind_at: date, recurring, recurring_type: recurring ? recurringType : null }),
+      body: JSON.stringify({ title, description, remind_at: new Date(date).toISOString(), recurring, recurring_type: recurring ? recurringType : null }),
     });
     setTitle(""); setDescription(""); setDate(""); setRecurring(false); setRecurringType("daily");
     loadReminders();
@@ -109,7 +114,7 @@ export default function Dashboard({ onLogout }) {
     await fetch(`${API_URL}/reminder/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ title: editTitle, description: editDescription, remind_at: editDate, recurring: editRecurring, recurring_type: editRecurring ? editRecurringType : null }),
+      body: JSON.stringify({ title: editTitle, description: editDescription, remind_at: new Date(editDate).toISOString(), recurring: editRecurring, recurring_type: editRecurring ? editRecurringType : null }),
     });
     setEditingId(null);
     loadReminders();
