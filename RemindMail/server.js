@@ -272,8 +272,9 @@ cron.schedule("* * * * *", async () => {
 
     try {
       const reminderDate = new Date(reminder.remind_at);
-      const formattedDate = reminderDate.toLocaleDateString("pt-BR", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-      const formattedTime = reminderDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      const tzOptions = { timeZone: "America/Sao_Paulo" };
+      const formattedDate = reminderDate.toLocaleDateString("pt-BR", { weekday: "long", year: "numeric", month: "long", day: "numeric", ...tzOptions });
+      const formattedTime = reminderDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", ...tzOptions });
 
       let nextDate = null;
       if (reminder.recurring) {
@@ -284,7 +285,7 @@ cron.schedule("* * * * *", async () => {
       }
 
       const nextText = nextDate
-        ? nextDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })
+        ? nextDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" })
         : null;
 
       const APP_URL = process.env.APP_URL || "https://remindmail.onrender.com";
