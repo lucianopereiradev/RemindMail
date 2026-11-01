@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-ink: #1b2559;
+  --color-ink-soft: #4b557a;
+  --color-ink-faint: #7c84a3;
+  --color-paper: #f7f8fc;
+  --color-card: #ffffff;
+  --color-line: #dfe3ef;
+  --color-line-soft: #ebeef6;
+  --color-brand: #3b5bdb;
+  --color-brand-dark: #2c48bd;
+  --color-brand-soft: #e9eeff;
+  --color-sent: #0b8a66;
+  --color-sent-soft: #e2f5ee;
+  --color-warn: #b25e09;
+  --color-warn-soft: #fdf1e2;
+  --color-danger: #c92a42;
+  --color-danger-soft: #fdecee;
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+  }
+
+  dialog::backdrop {
+    background: rgb(27 37 89 / 0.45);
+  }
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-arrive {
+  animation: arrive 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
