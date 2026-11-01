@@ -11,6 +11,9 @@ import {
 } from "../lib/datetime.js";
 import { EMPTY_REMINDER } from "../lib/reminderForm.js";
 
+// Lido só em handlers de evento (nunca durante a renderização)
+const currentTime = () => Date.now();
+
 function nextRoundHour(tz) {
   const d = new Date(Date.now() + 60 * 60 * 1000);
   return utcToWallTime(d, tz).slice(0, 14) + "00";
@@ -49,7 +52,7 @@ export function ReminderForm({ initial, editing, timezone, onSubmit, onCancel, s
 
   async function submit(e) {
     e.preventDefault();
-    const found = validate(Date.now());
+    const found = validate(currentTime());
     setErrors(found);
     if (Object.keys(found).length) return;
     const ok = await onSubmit({
