@@ -6,7 +6,7 @@ import { AuthContext } from "./context.js";
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(null);
+  const [profileState, setProfileState] = useState({ userId: null, data: null });
   const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
@@ -31,11 +31,10 @@ export function AuthProvider({ children }) {
 
   const userId = session?.user?.id ?? null;
 
+  const profile = userId && profileState.userId === userId ? profileState.data : null;
+
   useEffect(() => {
-    if (!userId) {
-      setProfile(null);
-      return;
-    }
+    if (!userId) return;
     let active = true;
     supabase
       .from("profiles")
@@ -43,7 +42,11 @@ export function AuthProvider({ children }) {
       .eq("id", userId)
       .maybeSingle()
       .then(({ data }) => {
-        if (active) setProfile(data ?? { id: userId, username: "", timezone: DEFAULT_TZ, email_notifications: true });
+        if (!active) return;
+        setProfileState({
+          userId,
+          data: data ?? { id: userId, username: "", timezone: DEFAULT_TZ, email_notifications: true },
+        });
       });
     return () => {
       active = false;
@@ -59,7 +62,7 @@ export function AuthProvider({ children }) {
         .select("id, username, timezone, email_notifications")
         .single();
       if (error) throw error;
-      setProfile(data);
+      setProfileState({ userId, data });
       return data;
     },
     [userId],

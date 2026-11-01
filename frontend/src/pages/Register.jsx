@@ -4,7 +4,8 @@ import { MailCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase.js";
 import { friendlyError } from "../lib/errors.js";
-import { AuthCard, useTitle } from "../components/layouts.jsx";
+import { AuthCard } from "../components/layouts.jsx";
+import { useTitle } from "../lib/useTitle.js";
 import { Button, Field, Input } from "../components/ui.jsx";
 import { GoogleButton } from "../components/GoogleButton.jsx";
 

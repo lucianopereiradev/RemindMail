@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { BellRing, CalendarRange, Globe2, History, PauseCircle, Repeat } from "lucide-react";
 import { InboxPreview } from "../components/InboxPreview.jsx";
-import { useTitle } from "../components/layouts.jsx";
+import { useTitle } from "../lib/useTitle.js";
 import { buttonClass } from "../lib/buttonClass.js";
 import { useAuth } from "../auth/context.js";
 

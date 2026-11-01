@@ -7,12 +7,6 @@ import { buttonClass } from "../lib/buttonClass.js";
 import { useAuth } from "../auth/context.js";
 import { CONTACT_EMAIL, GITHUB_URL } from "../lib/supabase.js";
 
-export function useTitle(title) {
-  useEffect(() => {
-    document.title = title ? `${title} · RemindMail` : "RemindMail · Lembretes por e-mail na hora certa";
-  }, [title]);
-}
-
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -53,10 +47,10 @@ function Footer() {
 
 export function SiteLayout() {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
-
-  useEffect(() => setOpen(false), [pathname]);
+  // O menu fica aberto só na página em que foi aberto
+  const [openOn, setOpenOn] = useState(null);
+  const open = openOn === pathname;
 
   const links = (
     <>
@@ -97,7 +91,7 @@ export function SiteLayout() {
           <button
             type="button"
             className="rounded-lg p-2 text-ink sm:hidden"
-            onClick={() => setOpen((v) => !v)}
+            onClick={() => setOpenOn(open ? null : pathname)}
             aria-expanded={open}
             aria-label={open ? "Fechar menu" : "Abrir menu"}
           >
