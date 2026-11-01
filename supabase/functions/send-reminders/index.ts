@@ -9,7 +9,7 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
 const SENDER_EMAIL = Deno.env.get("SENDER_EMAIL") ?? "lucianopereiradejesus14@gmail.com";
 const SENDER_NAME = Deno.env.get("SENDER_NAME") ?? "RemindMail";
-const APP_URL = (Deno.env.get("APP_URL") ?? "https://remindmail.pages.dev").replace(/\/$/, "");
+const APP_URL = (Deno.env.get("APP_URL") ?? "https://remindmail.lucianopereiradejesus14.workers.dev").replace(/\/$/, "");
 
 const BATCH_SIZE = 25;
 const CONCURRENCY = 5;

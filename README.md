@@ -23,7 +23,7 @@ Navegador (React)  ──>  Supabase Auth + Postgres (RLS)
                    Edge Function send-reminders  ──>  Brevo (e-mail)
 ```
 
-- **Front-end:** React 19, Vite, Tailwind CSS v4, React Router. Hospedado na Cloudflare Pages.
+- **Front-end:** React 19, Vite, Tailwind CSS v4, React Router. Hospedado na Cloudflare.
 - **Banco e autenticação:** Supabase (Postgres com Row Level Security: cada usuário só acessa os próprios dados).
 - **Agendamento:** `pg_cron` verifica os lembretes vencidos a cada minuto e só chama a Edge Function quando existe algo para enviar.
 - **Envio:** Edge Function em Deno que envia pela API da Brevo, com novas tentativas em caso de falha e avanço automático da recorrência.
@@ -65,7 +65,9 @@ Outros comandos: `npm test`, `npm run lint`, `npm run build`.
 4. Em Edge Functions > Secrets, crie `BREVO_API_KEY`. Opcionais: `SENDER_EMAIL`, `SENDER_NAME`, `APP_URL`.
 5. Em Authentication: defina a Site URL, as Redirect URLs e o SMTP da Brevo para os e-mails de cadastro.
 
-## Deploy do front-end (Cloudflare Pages)
+## Deploy do front-end (Cloudflare)
+
+Publicado em **https://remindmail.lucianopereiradejesus14.workers.dev**, com deploy automático a cada push na `main`.
 
 - **Root directory:** `frontend`
 - **Build command:** `npm run build`
