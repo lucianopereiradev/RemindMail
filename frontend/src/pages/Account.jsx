@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { supabase } from "../lib/supabase.js";
 import { friendlyError } from "../lib/errors.js";
 import { browserTimezone, formatTime, listTimezones } from "../lib/datetime.js";
 import { useAuth } from "../auth/context.js";
-import { useTitle } from "../components/layouts.jsx";
+import { useTitle } from "../lib/useTitle.js";
 import { Button, Dialog, Field, Input, Select, Spinner, Toggle } from "../components/ui.jsx";
 
 function Section({ title, description, children, tone }) {
@@ -20,13 +20,70 @@ function Section({ title, description, children, tone }) {
   );
 }
 
+function ProfileForm({ profile, onSave }) {
+  const [username, setUsername] = useState(profile.username ?? "");
+  const [timezone, setTimezone] = useState(profile.timezone);
+  const [saving, setSaving] = useState(false);
+
+  const zones = useMemo(() => {
+    const all = listTimezones();
+    return all.includes(profile.timezone) ? all : [profile.timezone, ...all];
+  }, [profile.timezone]);
+  const detected = browserTimezone();
+  const changed = username.trim() !== (profile.username ?? "") || timezone !== profile.timezone;
+
+  async function submit(e) {
+    e.preventDefault();
+    if (username.trim().length > 60) return toast.error("Use até 60 caracteres no nome.");
+    setSaving(true);
+    try {
+      await onSave({ username: username.trim(), timezone });
+      toast.success("Perfil salvo.");
+    } catch (err) {
+      toast.error(friendlyError(err, "Não foi possível salvar o perfil."));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <Field label="Nome" htmlFor="username">
+        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} maxLength={60} />
+      </Field>
+      <Field
+        label="Fuso horário"
+        htmlFor="timezone"
+        hint={`Agora são ${formatTime(new Date(), timezone)} neste fuso. Os horários dos lembretes seguem esta escolha.`}
+      >
+        <Select id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+          {zones.map((z) => (
+            <option key={z} value={z}>
+              {z.replaceAll("_", " ")}
+            </option>
+          ))}
+        </Select>
+        {detected !== timezone && (
+          <button
+            type="button"
+            onClick={() => setTimezone(detected)}
+            className="text-sm font-semibold text-brand hover:underline"
+          >
+            Usar o fuso deste dispositivo ({detected.replaceAll("_", " ")})
+          </button>
+        )}
+      </Field>
+      <Button type="submit" loading={saving} disabled={!changed}>
+        Salvar perfil
+      </Button>
+    </form>
+  );
+}
+
 export default function Account() {
   useTitle("Conta");
   const navigate = useNavigate();
   const { user, profile, updateProfile, signOut } = useAuth();
-  const [username, setUsername] = useState("");
-  const [timezone, setTimezone] = useState("");
-  const [savingProfile, setSavingProfile] = useState(false);
   const [savingToggle, setSavingToggle] = useState(false);
   const [password, setPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
@@ -34,18 +91,6 @@ export default function Account() {
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (profile) {
-      setUsername(profile.username ?? "");
-      setTimezone(profile.timezone);
-    }
-  }, [profile]);
-
-  const zones = useMemo(() => {
-    const all = listTimezones();
-    return profile && !all.includes(profile.timezone) ? [profile.timezone, ...all] : all;
-  }, [profile]);
-  const detected = browserTimezone();
   const usesPassword = user?.app_metadata?.providers?.includes("email") ?? true;
 
   if (!profile) {
@@ -54,22 +99,6 @@ export default function Account() {
         <Spinner className="size-6" />
       </div>
     );
-  }
-
-  const profileChanged = username.trim() !== (profile.username ?? "") || timezone !== profile.timezone;
-
-  async function saveProfile(e) {
-    e.preventDefault();
-    if (username.trim().length > 60) return toast.error("Use até 60 caracteres no nome.");
-    setSavingProfile(true);
-    try {
-      await updateProfile({ username: username.trim(), timezone });
-      toast.success("Perfil salvo.");
-    } catch (err) {
-      toast.error(friendlyError(err, "Não foi possível salvar o perfil."));
-    } finally {
-      setSavingProfile(false);
-    }
   }
 
   async function toggleEmails(value) {
@@ -114,36 +143,7 @@ export default function Account() {
 
       <div className="mt-4">
         <Section title="Perfil" description="Seu nome aparece na saudação dos e-mails.">
-          <form onSubmit={saveProfile} className="space-y-4">
-            <Field label="Nome" htmlFor="username">
-              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} maxLength={60} />
-            </Field>
-            <Field
-              label="Fuso horário"
-              htmlFor="timezone"
-              hint={`Agora são ${formatTime(new Date(), timezone || profile.timezone)} neste fuso. Os horários dos lembretes seguem esta escolha.`}
-            >
-              <Select id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)}>
-                {zones.map((z) => (
-                  <option key={z} value={z}>
-                    {z.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </Select>
-              {detected !== timezone && (
-                <button
-                  type="button"
-                  onClick={() => setTimezone(detected)}
-                  className="text-sm font-semibold text-brand hover:underline"
-                >
-                  Usar o fuso deste dispositivo ({detected.replaceAll("_", " ")})
-                </button>
-              )}
-            </Field>
-            <Button type="submit" loading={savingProfile} disabled={!profileChanged}>
-              Salvar perfil
-            </Button>
-          </form>
+          <ProfileForm key={profile.id} profile={profile} onSave={updateProfile} />
         </Section>
 
         <Section title="E-mails" description="Pause os envios sem apagar nenhum lembrete.">

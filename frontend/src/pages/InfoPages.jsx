@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useTitle } from "../components/layouts.jsx";
+import { useTitle } from "../lib/useTitle.js";
 import { buttonClass } from "../lib/buttonClass.js";
 import { CONTACT_EMAIL, GITHUB_URL } from "../lib/supabase.js";
 

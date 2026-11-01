@@ -6,13 +6,16 @@ import { supabase } from "../lib/supabase.js";
 import { friendlyError } from "../lib/errors.js";
 import { groupByDay } from "../lib/datetime.js";
 import { useAuth } from "../auth/context.js";
-import { useTitle } from "../components/layouts.jsx";
+import { useTitle } from "../lib/useTitle.js";
 import { Button, Dialog, Input, Spinner } from "../components/ui.jsx";
-import { EMPTY_REMINDER, ReminderForm, reminderToForm } from "../components/ReminderForm.jsx";
+import { ReminderForm } from "../components/ReminderForm.jsx";
+import { EMPTY_REMINDER, reminderToForm } from "../lib/reminderForm.js";
 import { ReminderItem } from "../components/ReminderItem.jsx";
 
 const COLUMNS =
   "id, title, description, remind_at, notify_before_minutes, notify_at, recurrence, recurrence_days, status, attempts, last_sent_at, send_count, updated_at";
+
+const fetchReminders = () => supabase.from("reminders").select(COLUMNS).order("remind_at", { ascending: true });
 
 export default function Dashboard() {
   useTitle("Meus lembretes");
@@ -28,8 +31,7 @@ export default function Dashboard() {
   const [deleting, setDeleting] = useState(false);
   const formRef = useRef(null);
 
-  const load = useCallback(async () => {
-    const { data, error } = await supabase.from("reminders").select(COLUMNS).order("remind_at", { ascending: true });
+  const applyResult = useCallback(({ data, error }) => {
     if (error) {
       setLoadError(friendlyError(error, "Não foi possível carregar seus lembretes."));
     } else {
@@ -39,13 +41,23 @@ export default function Dashboard() {
     setLoading(false);
   }, []);
 
+  const load = useCallback(() => fetchReminders().then(applyResult), [applyResult]);
+
   useEffect(() => {
-    load();
+    let active = true;
+    const refresh = () =>
+      fetchReminders().then((result) => {
+        if (active) applyResult(result);
+      });
+    refresh();
     // Atualiza quando a aba volta a ficar visível (ex.: depois de um envio)
-    const onVisible = () => document.visibilityState === "visible" && load();
+    const onVisible = () => document.visibilityState === "visible" && refresh();
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [load]);
+    return () => {
+      active = false;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [applyResult]);
 
   const initialForm = useMemo(
     () => (editing ? reminderToForm(editing, timezone) : EMPTY_REMINDER),
@@ -157,6 +169,7 @@ export default function Dashboard() {
             {editing ? "Editar lembrete" : "Novo lembrete"}
           </h2>
           <ReminderForm
+            key={editing?.id ?? "novo"}
             initial={initialForm}
             editing={!!editing}
             timezone={timezone}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, Save } from "lucide-react";
 import { Button, Field, Input, Select, Textarea } from "./ui.jsx";
 import {
@@ -9,26 +9,7 @@ import {
   utcToWallTime,
   wallTimeToUtc,
 } from "../lib/datetime.js";
-
-export const EMPTY_REMINDER = {
-  title: "",
-  description: "",
-  when: "",
-  notify_before_minutes: 0,
-  recurrence: "none",
-  recurrence_days: [],
-};
-
-export function reminderToForm(r, tz) {
-  return {
-    title: r.title,
-    description: r.description ?? "",
-    when: utcToWallTime(r.remind_at, tz),
-    notify_before_minutes: r.notify_before_minutes,
-    recurrence: r.recurrence,
-    recurrence_days: r.recurrence_days ?? [],
-  };
-}
+import { EMPTY_REMINDER } from "../lib/reminderForm.js";
 
 function nextRoundHour(tz) {
   const d = new Date(Date.now() + 60 * 60 * 1000);
@@ -38,11 +19,6 @@ function nextRoundHour(tz) {
 export function ReminderForm({ initial, editing, timezone, onSubmit, onCancel, saving }) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    setForm(initial);
-    setErrors({});
-  }, [initial]);
 
   const set = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -59,13 +35,13 @@ export function ReminderForm({ initial, editing, timezone, onSubmit, onCancel, s
     set("recurrence_days", days);
   }
 
-  function validate() {
+  function validate(now) {
     const next = {};
     if (!form.title.trim()) next.title = "Dê um nome ao lembrete.";
     else if (form.title.trim().length > 120) next.title = "Use até 120 caracteres.";
     if (form.description.length > 1000) next.description = "Use até 1000 caracteres.";
     if (!remindAt) next.when = "Escolha a data e a hora.";
-    else if (notifyAt.getTime() < Date.now() - 30000) next.when = "Esse horário já passou. Escolha uma data futura.";
+    else if (notifyAt.getTime() < now - 30000) next.when = "Esse horário já passou. Escolha uma data futura.";
     if (form.recurrence === "custom_weekly" && form.recurrence_days.length === 0)
       next.recurrence_days = "Escolha pelo menos um dia.";
     return next;
@@ -73,7 +49,7 @@ export function ReminderForm({ initial, editing, timezone, onSubmit, onCancel, s
 
   async function submit(e) {
     e.preventDefault();
-    const found = validate();
+    const found = validate(Date.now());
     setErrors(found);
     if (Object.keys(found).length) return;
     const ok = await onSubmit({
